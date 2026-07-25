@@ -46,6 +46,15 @@ AWQ / FP8) but each row is the same model family at a similar bit-width.
   prompt tok/s ≈ prompt_tokens / TTFT; generation tok/s =
   completion_tokens / wall-time after the first token.
   `temperature=0`, `seed=42`; each run's prompt gets a unique prefix.
+- **Method caveat vs [`RESULTS.md`](RESULTS.md).** vLLM exposes no
+  server-side timing counters, so generation rate here is measured
+  client-side; the Ollama harness reads Ollama's own
+  `eval_count`/`eval_duration`, which exclude client and transport
+  cost by construction. The SSE read loop is therefore kept
+  fork-free (bash builtins only) so the residual client overhead is
+  microseconds per token rather than milliseconds. Read the
+  cross-runtime comparison as "vLLM measured no more favourably
+  than Ollama", not as two identical instruments.
 - VRAM peak is total GPU memory used (sampled every 0.5 s), including
   a small desktop baseline **and** the KV-cache pool vLLM pre-allocates
   up to `gpu-memory-utilization`. That is why peaks sit near the card

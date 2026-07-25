@@ -97,7 +97,7 @@ Copy [`compose/vllm/.env.example`](compose/vllm/.env.example) to `.env`:
 | `VLLM_HOST_PORT`              | `8000`                       | Host port for the OpenAI-compatible API  |
 | `VLLM_MODEL`                  | `cyankiwi/Qwen3.5-4B-AWQ-INT8-INT4` | Hugging Face model id to serve    |
 | `VLLM_MAX_MODEL_LEN`          | `4096`                       | Context length reserved at startup       |
-| `VLLM_GPU_MEMORY_UTILIZATION` | `0.80`                       | Fraction of free VRAM vLLM may claim     |
+| `VLLM_GPU_MEMORY_UTILIZATION` | `0.80`                       | Fraction of **total** VRAM vLLM may claim |
 | `VLLM_DTYPE`                  | `auto`                       | Weight dtype                             |
 | `HF_TOKEN`                    | _(empty)_                    | Only needed for gated models             |
 
@@ -216,7 +216,7 @@ numbers are not polluted by a second resident model, then restarts them.
 
 | Variable            | Default                         | Purpose                               |
 | ------------------- | ------------------------------- | ------------------------------------- |
-| `BENCH_PAIRS`       | the 7 pairs above               | `ollama_tag=hf_id` entries            |
+| `BENCH_PAIRS`       | the 5 pairs above               | `ollama_tag=hf_id` entries            |
 | `BENCH_RUNS`        | `3`                             | Measured runs per model × scenario    |
 | `BENCH_NUM_PREDICT` | `256`                           | Output tokens in the generation scenario |
 | `VLLM_URL`          | `http://localhost:8000`         | API endpoint to benchmark             |
