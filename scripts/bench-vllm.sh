@@ -39,8 +39,18 @@ READY_TIMEOUT=${READY_TIMEOUT:-1200}
 VLLM_IMAGE_TAG=${VLLM_IMAGE_TAG:-v0.25.0}
 # 4096 covers the long-prompt scenario; keeps KV cache within 16 GB + desktop.
 VLLM_MAX_MODEL_LEN=${VLLM_MAX_MODEL_LEN:-4096}
+# Fraction of TOTAL GPU memory (not free memory) vLLM may claim. A desktop
+# session comes out of the remaining share: 0.80 of a 16 GB card leaves ~3.1 GB,
+# so a compositor holding ~2.7 GB puts the bigger AWQ rows on the OOM edge.
 VLLM_GPU_MEMORY_UTILIZATION=${VLLM_GPU_MEMORY_UTILIZATION:-0.80}
 VLLM_DTYPE=${VLLM_DTYPE:-auto}
+# Set by start_model; consulted by the EXIT trap so `report` never tears down
+# a vLLM the user started themselves.
+VLLM_MODEL=${VLLM_MODEL:-}
+VLLM_STARTED=0
+# Sibling GPU services this run stopped, so EXIT can restore exactly those.
+STOPPED_SIBLINGS=""
+SIBLING_CONTAINERS=${SIBLING_CONTAINERS:-"freki-ollama freki-comfyui"}
 
 # CSV uses the HF id as model; ollama counterpart lives in the .meta file.
 CSV_HEADER="model,scenario,run,ttft_ms,gen_tps,prompt_tps,load_ms,eval_count,prompt_eval_count,vram_peak_mib,ram_used_peak_mib"
@@ -81,7 +91,41 @@ sampler_stop() {
     SAMPLER_PID=""
 }
 
-cleanup() { [ -n "${SAMPLER_PID:-}" ] && kill "$SAMPLER_PID" 2>/dev/null || true; }
+# --- sibling GPU services ------------------------------------------------
+# The matrix needs the card to itself, but a failed run must not leave the
+# host reconfigured: stop only what was actually running, restore only that.
+
+stop_siblings() {
+    local c
+    for c in $SIBLING_CONTAINERS; do
+        if [ "$(docker inspect -f '{{.State.Running}}' "$c" 2>/dev/null)" = true ]; then
+            STOPPED_SIBLINGS="$STOPPED_SIBLINGS $c"
+            log "stopping $c for a clean VRAM baseline"
+            docker stop "$c" >/dev/null 2>&1 || true
+        fi
+    done
+}
+
+restore_siblings() {
+    local c
+    [ -n "$STOPPED_SIBLINGS" ] || return 0
+    for c in $STOPPED_SIBLINGS; do
+        log "restarting $c"
+        docker start "$c" >/dev/null 2>&1 || true
+    done
+    STOPPED_SIBLINGS=""
+}
+
+# Runs on every exit path, including die() mid-matrix and Ctrl-C.
+cleanup() {
+    if [ -n "${SAMPLER_PID:-}" ]; then
+        kill "$SAMPLER_PID" 2>/dev/null || true
+    fi
+    if [ "$VLLM_STARTED" = 1 ]; then
+        stop_vllm
+    fi
+    restore_siblings
+}
 trap cleanup EXIT
 
 # --- compose helpers ----------------------------------------------------
@@ -131,8 +175,19 @@ start_model() {
     echo $(((now - start) / 1000000))
 }
 
+# The service carries `restart: unless-stopped`, so a container that is
+# crash-looping (bad model id, CUDA OOM) can be resurrected by the daemon in
+# the gap between compose's stop and its remove. Drop the restart policy
+# first, then verify the teardown actually took instead of trusting `|| true`.
 stop_vllm() {
-    compose down >/dev/null 2>&1 || true
+    local i
+    docker update --restart=no freki-vllm >/dev/null 2>&1 || true
+    for i in 1 2 3; do
+        compose down --remove-orphans >/dev/null 2>&1 || true
+        docker inspect freki-vllm >/dev/null 2>&1 || return 0
+        sleep 1
+    done
+    log "warning: freki-vllm survived teardown — run 'cd compose/vllm && docker compose down'"
 }
 
 served_model() {
@@ -175,21 +230,31 @@ run_once() {
           stream:true,
           stream_options:{include_usage:true}}')
 
+    # The loop body runs once per streamed token and its cost sits inside the
+    # generation wall-clock below, so it must not become the bottleneck. An
+    # earlier version forked jq twice per chunk: ~1.9 ms/chunk, a ceiling of
+    # ~530 chunks/s. That was still ~4x faster than the quickest model on the
+    # reference host (~127 tok/s), so it did NOT bias published numbers — but
+    # it is a silent cap that would clip measurements on faster hardware, and
+    # it is invisible when it bites (rates just stop scaling). Everything here
+    # is a bash builtin; the one surviving jq parses usage after the stream.
+    #   non-empty token chunk: "text":"..." but not "text":""
+    #   final usage chunk:     "usage":{...}  (per-token chunks carry "usage":null)
     start=$(date +%s%N)
     while IFS= read -r line; do
         [[ "$line" == data:* ]] || continue
         data=${line#data: }
         data=${data# }
         [[ "$data" == "[DONE]" ]] && continue
-        [[ -z "$data" ]] && continue
-        if [[ -z "$ttft_ms" ]]; then
-            if jq -e '(.choices[0].text // "") != ""' <<<"$data" >/dev/null 2>&1; then
-                now=$(date +%s%N)
-                first_ns=$now
-                ttft_ms=$(((now - start) / 1000000))
-            fi
+        if [[ -z "$data" ]]; then
+            continue
         fi
-        if jq -e '.usage != null' <<<"$data" >/dev/null 2>&1; then
+        if [[ -z "$ttft_ms" && "$data" == *'"text":"'* && "$data" != *'"text":""'* ]]; then
+            now=$(date +%s%N)
+            first_ns=$now
+            ttft_ms=$(((now - start) / 1000000))
+        fi
+        if [[ "$data" == *'"usage":{'* ]]; then
             usage_line=$data
         fi
     done < <(curl -sN "$VLLM_URL/v1/completions" \
@@ -277,8 +342,7 @@ cmd_run() {
         echo "map=benchmarks/MODEL-MAP-vllm.md"
     } >"$meta"
 
-    log "stopping other freki GPU services for a clean VRAM baseline (ollama, comfyui)"
-    docker stop freki-ollama freki-comfyui >/dev/null 2>&1 || true
+    stop_siblings
     sleep 2
 
     for pair in "${pairs[@]}"; do
@@ -287,6 +351,9 @@ cmd_run() {
         [[ -n "$ollama_tag" && -n "$hf_id" && "$pair" == *"="* ]] \
             || die "bad BENCH_PAIRS entry: $pair (want ollama_tag=hf_id)"
 
+        # Must be set in this shell, not inside start_model: that runs in a
+        # command substitution, so assignments there never reach the EXIT trap.
+        VLLM_STARTED=1
         cold_ms=$(start_model "$hf_id")
         served=$(served_model)
         model_api=$hf_id
@@ -310,10 +377,8 @@ cmd_run() {
         bench_model "$model_api" "$csv" "$cold_ms"
     done
 
-    stop_vllm
-    log "restarting freki-ollama / freki-comfyui if they were present"
-    docker start freki-ollama freki-comfyui >/dev/null 2>&1 || true
-
+    # Teardown and sibling restore are handled by the EXIT trap, so they also
+    # run when a model fails to load partway through the matrix.
     cmd_report "$csv"
     log "done: $csv"
 }
@@ -429,6 +494,15 @@ cmd_report() {
         echo "  prompt tok/s ≈ prompt_tokens / TTFT; generation tok/s ="
         echo "  completion_tokens / wall-time after the first token."
         echo "  \`temperature=0\`, \`seed=42\`; each run's prompt gets a unique prefix."
+        echo "- **Method caveat vs [\`RESULTS.md\`](RESULTS.md).** vLLM exposes no"
+        echo "  server-side timing counters, so generation rate here is measured"
+        echo "  client-side; the Ollama harness reads Ollama's own"
+        echo "  \`eval_count\`/\`eval_duration\`, which exclude client and transport"
+        echo "  cost by construction. The SSE read loop is therefore kept"
+        echo "  fork-free (bash builtins only) so the residual client overhead is"
+        echo "  microseconds per token rather than milliseconds. Read the"
+        echo "  cross-runtime comparison as \"vLLM measured no more favourably"
+        echo "  than Ollama\", not as two identical instruments."
         echo "- VRAM peak is total GPU memory used (sampled every 0.5 s), including"
         echo "  a small desktop baseline **and** the KV-cache pool vLLM pre-allocates"
         echo "  up to \`gpu-memory-utilization\`. That is why peaks sit near the card"
