@@ -1,0 +1,45 @@
+# freki-llm-stack reverse proxy
+#
+# Path prefixes (LAN-friendly):
+#   /ollama/*   → OLLAMA_UPSTREAM   (strip /ollama)
+#   /vllm/*     → VLLM_UPSTREAM     (strip /vllm)
+#   /comfyui/*  → COMFYUI_UPSTREAM  (strip /comfyui)
+#
+# Env vars are expanded by Caddy at load time (see docker-compose.yml).
+# basic_auth requires a bcrypt (or argon2id) hash — never a plaintext password.
+# Generate one with: ../../scripts/gen-proxy-auth.sh
+
+{
+	# No need for the admin API inside this single-purpose container
+	admin off
+}
+
+:8080 {
+	# HTTP Basic Auth on every route (including the index).
+	# PROXY_PASSWORD_HASH must be a bcrypt string, e.g. $2a$14$...
+	# In compose/proxy/.env, escape each $ as $$ so Compose passes it through.
+	basic_auth {
+		{$PROXY_USER} {$PROXY_PASSWORD_HASH}
+	}
+
+	# Ollama native API: /ollama/api/tags → backend /api/tags
+	handle_path /ollama/* {
+		reverse_proxy {$OLLAMA_UPSTREAM}
+	}
+
+	# vLLM OpenAI-compatible API: /vllm/v1/models → backend /v1/models
+	handle_path /vllm/* {
+		reverse_proxy {$VLLM_UPSTREAM}
+	}
+
+	# ComfyUI: path strip works for many HTTP API calls; the browser UI may
+	# still break under a subpath (asset/WebSocket base-path issues). Prefer
+	# host-based routing or a direct bind for interactive UI use.
+	handle_path /comfyui/* {
+		reverse_proxy {$COMFYUI_UPSTREAM}
+	}
+
+	handle {
+		respond "freki-llm-stack proxy — authenticated routes: /ollama/, /vllm/, /comfyui/" 200
+	}
+}

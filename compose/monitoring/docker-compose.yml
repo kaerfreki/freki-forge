@@ -1,0 +1,62 @@
+services:
+  # GPU metrics via nvidia-smi (injected by NVIDIA Container Toolkit).
+  # Chosen over DCGM-exporter: smaller image, no datacenter DCGM stack, works
+  # cleanly on consumer GeForce/RTX workstations. See README.md.
+  nvidia-gpu-exporter:
+    image: utkuozdemir/nvidia_gpu_exporter:${NVIDIA_GPU_EXPORTER_IMAGE_TAG:-1.13.1}
+    container_name: freki-nvidia-gpu-exporter
+    restart: unless-stopped
+    environment:
+      NVIDIA_DRIVER_CAPABILITIES: utility
+    ports:
+      - "${NVIDIA_GPU_EXPORTER_HOST_PORT:-9835}:9835"
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  prometheus:
+    image: prom/prometheus:${PROMETHEUS_IMAGE_TAG:-v3.13.1}
+    container_name: freki-prometheus
+    restart: unless-stopped
+    ports:
+      - "${PROMETHEUS_HOST_PORT:-9090}:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.path=/prometheus
+      - --storage.tsdb.retention.time=${PROMETHEUS_RETENTION:-15d}
+      - --web.enable-lifecycle
+    # Reach inference services published on the Docker host (vLLM :8000, …)
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # No hard depends_on the GPU exporter: Prometheus should still start if
+    # nvidia-container-cli fails (e.g. host driver/library mismatch after an
+    # upgrade). Scrape targets simply go red until the exporter is healthy.
+
+  grafana:
+    image: grafana/grafana:${GRAFANA_IMAGE_TAG:-13.1.1}
+    container_name: freki-grafana
+    restart: unless-stopped
+    ports:
+      - "${GRAFANA_HOST_PORT:-3000}:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: ${GRAFANA_ADMIN_USER:-admin}
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_ADMIN_PASSWORD:-admin}
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_AUTH_ANONYMOUS_ENABLED: "false"
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafana-data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+volumes:
+  prometheus-data:
+  grafana-data:

@@ -289,6 +289,50 @@ kubectl -n freki-llm port-forward svc/ollama 11434:11434
 Schedule **one** GPU workload at a time per card — the device plugin will
 happily pack pods, but a 16 GB consumer GPU will not.
 
+## Reverse proxy and auth
+
+A single authenticated entrypoint in front of the host-published backends
+(Ollama, vLLM, ComfyUI): [`compose/proxy/`](compose/proxy/) runs **Caddy**
+with HTTP Basic Auth and path prefixes (`/ollama/`, `/vllm/`, `/comfyui/`).
+Backends stay in their own compose projects; the proxy reaches them via
+`host.docker.internal`.
+
+```bash
+cd compose/proxy
+cp .env.example .env
+../../scripts/gen-proxy-auth.sh 'your-strong-password'   # paste into .env
+docker compose up -d
+curl -sS -u 'freki:YOUR_PASSWORD' http://localhost:8080/ollama/api/version
+```
+
+Details and caveats (LAN protection, not multi-tenant isolation; ComfyUI UI
+under a subpath is limited): [`compose/proxy/README.md`](compose/proxy/README.md).
+
+## Monitoring
+
+GPU-focused observability in [`compose/monitoring/`](compose/monitoring/):
+**Prometheus**, **Grafana** (provisioned datasource + GPU dashboard), and
+`nvidia_gpu_exporter` (nvidia-smi via the Container Toolkit — lighter than
+DCGM on a consumer workstation).
+
+```bash
+cd compose/monitoring
+docker compose up -d
+# Prometheus http://localhost:9090  ·  Grafana http://localhost:3000 (admin/admin)
+```
+
+Inference stacks are separate; start Ollama/vLLM/ComfyUI when you want load
+on the graphs. Notes: [`compose/monitoring/README.md`](compose/monitoring/README.md).
+
+## Sizing guide
+
+Practical model / context / runtime picks for the published hardware, distilled
+from the benchmark tables:
+
+**[`docs/SIZING.md`](docs/SIZING.md)** — OpenCode → `ornith:9b` @ 32k context,
+when to prefer Ollama vs vLLM on this card, image-gen VRAM/time, and the
+one-GPU rule.
+
 ## Roadmap
 
 - [x] **M1** — Ollama via docker-compose, pinned versions, smoke test
@@ -296,8 +340,7 @@ happily pack pods, but a 16 GB consumer GPU will not.
       per model × quantization × hardware, auto-generated results table
 - [x] **M3** — vLLM alongside Ollama, same benchmarks, when-to-pick-which guide
 - [x] **M4** — Kubernetes manifests (GPU resources, model persistence)
-- [ ] **M5** — Monitoring, reverse proxy with auth, sizing guide
-
+- [x] **M5** — Monitoring, reverse proxy with auth, sizing guide
 
 Benchmark numbers published here will always state the exact hardware and
 tool versions they were measured on.

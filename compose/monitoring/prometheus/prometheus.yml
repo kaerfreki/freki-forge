@@ -1,0 +1,32 @@
+# freki-llm-stack monitoring scrape config.
+# GPU is the primary target. Inference scrapes are optional and will show
+# DOWN in Prometheus when those compose projects are not running.
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  # Host GPU (consumer RTX) — utkuozdemir/nvidia_gpu_exporter on this network
+  - job_name: nvidia-gpu
+    static_configs:
+      - targets: ["nvidia-gpu-exporter:9835"]
+        labels:
+          stack: freki-llm
+
+  # vLLM OpenAI server exposes native Prometheus metrics at /metrics.
+  # Default host publish is compose/vllm → :8000. Job stays DOWN until vLLM runs.
+  - job_name: vllm
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["host.docker.internal:8000"]
+        labels:
+          stack: freki-llm
+          service: vllm
+
+  # Ollama does not expose a Prometheus /metrics endpoint natively.
+  # GPU load from Ollama is still visible via the nvidia-gpu job above.
+  # If you add a third-party ollama exporter later, scrape it here, e.g.:
+  # - job_name: ollama
+  #   static_configs:
+  #     - targets: ["host.docker.internal:PORT"]

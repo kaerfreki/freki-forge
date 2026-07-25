@@ -1,0 +1,24 @@
+services:
+  proxy:
+    # Official Caddy image — pin the tag; bump deliberately.
+    image: caddy:${CADDY_IMAGE_TAG:-2.11.4-alpine}
+    container_name: freki-proxy
+    restart: unless-stopped
+    ports:
+      - "${PROXY_HOST_PORT:-8080}:8080"
+    environment:
+      # HTTP Basic Auth (hash only — never put a plaintext password here)
+      PROXY_USER: ${PROXY_USER:-freki}
+      # Required. Generate with ../../scripts/gen-proxy-auth.sh
+      # In .env, escape bcrypt $ as $$ (the script prints that form).
+      PROXY_PASSWORD_HASH: ${PROXY_PASSWORD_HASH:?Set PROXY_PASSWORD_HASH in .env — run ../../scripts/gen-proxy-auth.sh}
+      # Backends on the Docker host (services stay in their own compose projects)
+      OLLAMA_UPSTREAM: ${OLLAMA_UPSTREAM:-host.docker.internal:11434}
+      VLLM_UPSTREAM: ${VLLM_UPSTREAM:-host.docker.internal:8000}
+      COMFYUI_UPSTREAM: ${COMFYUI_UPSTREAM:-host.docker.internal:8188}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+    # Linux: map host.docker.internal to the host gateway so we can reach
+    # published ports of other compose projects without joining their networks.
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
