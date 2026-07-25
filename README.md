@@ -341,6 +341,9 @@ one-GPU rule.
 - [x] **M3** — vLLM alongside Ollama, same benchmarks, when-to-pick-which guide
 - [x] **M4** — Kubernetes manifests (GPU resources, model persistence)
 - [x] **M5** — Monitoring, reverse proxy with auth, sizing guide
+- [ ] **M6** — Concurrent load benches (Ollama vs vLLM) + RESULTS
+- [ ] **M7** — Secure production edge (localhost backends, TLS, no lab credentials)
+- [ ] **M8** — Kubernetes ops parity (safe lifecycle, proxy/auth, monitoring, model bootstrap, Ingress)
 
 Benchmark numbers published here will always state the exact hardware and
 tool versions they were measured on.
