@@ -1,0 +1,18 @@
+tool,model,quant,file_gib,params_b,ngl,fa,ctx,test,tps_mean,tps_stddev,reps,note
+llama-bench,Qwen3.8-27B,UD-Q2_K_XL,9.14,27.32,99,1,,pp512,1591.26,58.86,2,
+llama-bench,Qwen3.8-27B,UD-Q2_K_XL,9.14,27.32,99,1,,pp4096,1599.68,1.33,2,
+llama-bench,Qwen3.8-27B,UD-Q2_K_XL,9.14,27.32,99,1,,tg128,44.62,0.05,2,
+llama-bench,Qwen3.8-27B,UD-IQ4_XS,13.26,27.32,99,1,,pp512,2122.53,79.08,2,
+llama-bench,Qwen3.8-27B,UD-IQ4_XS,13.26,27.32,99,1,,pp4096,2118.58,1.11,2,
+llama-bench,Qwen3.8-27B,UD-IQ4_XS,13.26,27.32,99,1,,tg128,42.16,0.06,2,
+llama-bench,Qwen3.8-27B,UD-Q4_K_M,15.32,27.32,99,1,,pp512+pp4096+tg128,,,2,aborted after ~11 min without output (does not fit 16 GB)
+llama-bench,Qwen3.8-27B,UD-Q4_K_M,15.32,27.32,54,1,,pp512,1061.56,0.00,1,partial offload
+llama-bench,Qwen3.8-27B,UD-Q4_K_M,15.32,27.32,54,1,,tg64,11.65,0.00,1,partial offload
+llama-bench,Qwen3.8-27B,UD-Q4_K_M,15.32,27.32,58,1,,pp512,1256.50,0.00,1,partial offload
+llama-bench,Qwen3.8-27B,UD-Q4_K_M,15.32,27.32,58,1,,tg64,14.36,0.00,1,partial offload
+llama-bench,Qwen3.8-27B,UD-Q4_K_M,15.32,27.32,62,1,,pp512,1.41,,1,partial offload; VRAM overcommitted (spill to shared memory); stddev not captured
+llama-bench,Qwen3.8-27B,UD-Q4_K_M,15.32,27.32,62,1,,tg64,23.35,,1,partial offload; VRAM overcommitted; stddev not captured
+llama-bench,Qwen3.8-27B,UD-Q5_K_M,18.40,27.32,46,1,,pp512,700.42,0.00,1,partial offload
+llama-bench,Qwen3.8-27B,UD-Q5_K_M,18.40,27.32,46,1,,tg64,8.42,0.00,1,partial offload
+llama-bench,Qwen3.8-27B,UD-Q5_K_M,18.40,27.32,52,1,,pp512,114.31,0.00,1,partial offload
+llama-bench,Qwen3.8-27B,UD-Q5_K_M,18.40,27.32,52,1,,tg64,8.87,0.00,1,partial offload

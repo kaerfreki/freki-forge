@@ -225,6 +225,23 @@ numbers are not polluted by a second resident model, then restarts them.
 | `VLLM_URL`          | `http://localhost:8000`         | API endpoint to benchmark             |
 | `READY_TIMEOUT`     | `1200`                          | Seconds to wait for `/health` (includes first download) |
 
+## Benchmarks — llama.cpp and GGUF image/video (Windows, one-off)
+
+Two hand-assembled result sets from a single session on the same class of
+card (RTX 4080 16 GB, 32 GB RAM) under Windows 11, outside the compose
+stack. They are not produced by a script in this repo and use 1–2 runs
+rather than 3-run medians, so read them as sizing guidance:
+
+- [`benchmarks/RESULTS-llamacpp.md`](benchmarks/RESULTS-llamacpp.md):
+  Qwen3.8-27B GGUF quants under `llama-bench` / `llama-server`. `UD-IQ4_XS`
+  (13.3 GiB) is the largest quant that fits fully: ~2,120 tok/s prefill and
+  42 tok/s generation. `Q4_K_M` and larger spill and drop to 8–14 tok/s.
+- [`benchmarks/RESULTS-gguf-image-video.md`](benchmarks/RESULTS-gguf-image-video.md):
+  FLUX.2 klein, Qwen-Image 2.1, Z-Image, Wan 2.2 (TI2V / I2V / S2V / Animate)
+  and LTX-2.3 / 2.5 in ComfyUI at several quants. On this card diffusion
+  speed barely changes with quant level, and 32 GB of system RAM is the
+  limit for 14B+ video.
+
 ## Image generation
 
 A separate stack for text-to-image models: [ComfyUI](https://github.com/comfyanonymous/ComfyUI)

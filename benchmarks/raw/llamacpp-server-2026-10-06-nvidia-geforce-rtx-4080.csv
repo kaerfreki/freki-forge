@@ -1,0 +1,8 @@
+config,task,wall_s,prompt_tokens,prompt_tps,gen_tokens,gen_tps,vram_used_mib_after,note
+iq4xs+mmproj ngl999 parallel4 ctx32768,vision_1img,66.7,3666,61,134,21.9,15798,--fit ignored because -ngl was set; 4 slots overcommit VRAM
+iq4xs+mmproj ngl999 parallel4 ctx32768,vision_1img_b,43.9,2110,71,314,22.1,15798,same run
+iq4xs+mmproj ngl999 parallel4 ctx32768,text_shotlist,20.9,84,114,446,22.2,15798,same run
+iq4xs+mmproj fit=on parallel1 ctx32768,vision_1img,14.5,3666,687,140,15.3,15630,--fit moved some layers to CPU
+iq4xs+mmproj fit=on parallel1 ctx32768,vision_1img_b,25.9,2110,858,363,15.6,15630,same run
+iq4xs+mmproj fit=on parallel1 ctx32768,text_shotlist,36.6,84,256,582,16.1,15630,same run
+iq4xs text-only ngl999 parallel1 ctx32768,text_150w,,,165,,41.6,15113,single request; short prompt so prompt t/s is not representative
