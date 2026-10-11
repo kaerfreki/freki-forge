@@ -274,9 +274,9 @@ cmd_report() {
         echo
         echo "Quality is a property of the model, not of this stack, so no scores are"
         echo "published here — instead, [unedited sample outputs](outputs/) of every"
-        echo "benchmarked model on seven fixed tasks (summarization, structured"
-        echo "extraction, coding, arithmetic reasoning, trading analysis, legal-clause"
-        echo "extraction, RAG faithfulness) are provided for side-by-side comparison."
+        echo "benchmarked model on four fixed tasks (summarization, structured"
+        echo "extraction, coding, arithmetic reasoning) are provided for side-by-side"
+        echo "comparison."
         echo "Generate them with \`scripts/sample-outputs.sh\`."
         echo
         echo "## Method"
