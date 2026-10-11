@@ -1,18 +1,22 @@
 # freki-llm-stack
 
-Self-hosted LLM inference, done properly: reproducible deployments of
-open-weights models with Ollama and vLLM (and ComfyUI for images), from a
-single `docker-compose up` to Kubernetes, with honest benchmarks.
+The self-hosted GPU stack behind **Kaer Freki**, an AI music label for
+gamers: reproducible deployments of open-weights models with Ollama and vLLM
+(and ComfyUI for images), from a single `docker-compose up` to Kubernetes,
+with honest benchmarks — all on one consumer RTX 4080.
 
-## The problem
+## Why
 
-Plenty of teams want LLM capabilities but cannot — or do not want to — send
-their data to an external API: confidentiality, data sovereignty, or simply
-cost at scale. Running open-weights models on your own hardware solves that,
-but the ecosystem is a maze of runtimes, quantization formats and GPU plumbing.
+The label's visuals are made locally: today that means ComfyUI with FLUX,
+Qwen-Image, Wan 2.2 and LTX for stills and video. That pipeline is context
+only — the numbers published here cover exactly the models and versions
+listed in each results file, nothing more.
 
-This repository is a set of **tested, reproducible recipes** to get from a
-bare Linux box with an NVIDIA GPU to a working, measurable inference endpoint.
+Running open-weights models on your own card keeps work private and costs
+predictable, but the ecosystem is a maze of runtimes, quantization formats
+and GPU plumbing. This repository is a set of **tested, reproducible
+recipes** to get from a bare Linux box with an NVIDIA GPU to a working,
+measurable inference endpoint.
 
 ## Architecture
 
@@ -317,7 +321,7 @@ DCGM on a consumer workstation).
 ```bash
 cd compose/monitoring
 docker compose up -d
-# Prometheus http://localhost:9090  ·  Grafana http://localhost:3000 (admin/admin)
+# Prometheus http://localhost:9090  ·  Grafana http://localhost:3000 (admin / your GRAFANA_ADMIN_PASSWORD)
 ```
 
 Inference stacks are separate; start Ollama/vLLM/ComfyUI when you want load
@@ -349,4 +353,4 @@ tool versions they were measured on.
 
 ## License
 
-[MIT](LICENSE) — © 2026 Kaer Freki · [kaerfreki.fr](https://kaerfreki.fr)
+[MIT](LICENSE) — © 2026 Kaer Freki
