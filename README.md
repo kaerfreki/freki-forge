@@ -1,4 +1,4 @@
-# freki-llm-stack
+# freki-forge
 
 The self-hosted GPU stack behind **Kaer Freki**, an AI music label for
 gamers: reproducible deployments of open-weights models with Ollama and vLLM

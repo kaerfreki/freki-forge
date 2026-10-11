@@ -1,4 +1,4 @@
-# freki-llm-stack reverse proxy
+# freki-forge reverse proxy
 #
 # Path prefixes (LAN-friendly):
 #   /ollama/*   → OLLAMA_UPSTREAM   (strip /ollama)
@@ -40,6 +40,6 @@
 	}
 
 	handle {
-		respond "freki-llm-stack proxy — authenticated routes: /ollama/, /vllm/, /comfyui/" 200
+		respond "freki-forge proxy — authenticated routes: /ollama/, /vllm/, /comfyui/" 200
 	}
 }

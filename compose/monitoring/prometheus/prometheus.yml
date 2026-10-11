@@ -1,4 +1,4 @@
-# freki-llm-stack monitoring scrape config.
+# freki-forge monitoring scrape config.
 # GPU is the primary target. Inference scrapes are optional and will show
 # DOWN in Prometheus when those compose projects are not running.
 

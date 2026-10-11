@@ -4,7 +4,7 @@ metadata:
   name: ollama
   labels:
     app.kubernetes.io/name: ollama
-    app.kubernetes.io/part-of: freki-llm-stack
+    app.kubernetes.io/part-of: freki-forge
 spec:
   replicas: 1
   # RWO PVC + single GPU: never run two pods against the same volume.
@@ -17,7 +17,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: ollama
-        app.kubernetes.io/part-of: freki-llm-stack
+        app.kubernetes.io/part-of: freki-forge
     spec:
       # Uncomment if your cluster uses the NVIDIA RuntimeClass from GPU Operator.
       # runtimeClassName: nvidia

@@ -4,7 +4,7 @@ metadata:
   name: comfyui-models
   labels:
     app.kubernetes.io/name: comfyui
-    app.kubernetes.io/part-of: freki-llm-stack
+    app.kubernetes.io/part-of: freki-forge
 spec:
   accessModes:
     - ReadWriteOnce
@@ -20,7 +20,7 @@ metadata:
   name: comfyui-output
   labels:
     app.kubernetes.io/name: comfyui
-    app.kubernetes.io/part-of: freki-llm-stack
+    app.kubernetes.io/part-of: freki-forge
 spec:
   accessModes:
     - ReadWriteOnce

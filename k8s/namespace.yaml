@@ -3,4 +3,4 @@ kind: Namespace
 metadata:
   name: freki-llm
   labels:
-    app.kubernetes.io/part-of: freki-llm-stack
+    app.kubernetes.io/part-of: freki-forge

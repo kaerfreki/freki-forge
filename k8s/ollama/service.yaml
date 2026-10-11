@@ -4,7 +4,7 @@ metadata:
   name: ollama
   labels:
     app.kubernetes.io/name: ollama
-    app.kubernetes.io/part-of: freki-llm-stack
+    app.kubernetes.io/part-of: freki-forge
 spec:
   type: ClusterIP
   selector:

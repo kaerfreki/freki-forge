@@ -4,7 +4,7 @@ metadata:
   name: comfyui
   labels:
     app.kubernetes.io/name: comfyui
-    app.kubernetes.io/part-of: freki-llm-stack
+    app.kubernetes.io/part-of: freki-forge
 spec:
   replicas: 1
   strategy:
@@ -16,7 +16,7 @@ spec:
     metadata:
       labels:
         app.kubernetes.io/name: comfyui
-        app.kubernetes.io/part-of: freki-llm-stack
+        app.kubernetes.io/part-of: freki-forge
     spec:
       # runtimeClassName: nvidia
       tolerations:
