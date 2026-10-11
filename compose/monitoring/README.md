@@ -107,7 +107,7 @@ Copy [`.env.example`](.env.example) to `.env`:
 | `GRAFANA_HOST_PORT` | `3000` | Host port for Grafana |
 | `NVIDIA_GPU_EXPORTER_HOST_PORT` | `9835` | Host port for raw `/metrics` |
 | `PROMETHEUS_RETENTION` | `15d` | TSDB retention |
-| `GRAFANA_ADMIN_USER` / `_PASSWORD` | `admin` / `admin` | Grafana login |
+| `GRAFANA_ADMIN_USER` / `_PASSWORD` | `admin` / `change-me` in `.env.example` (`admin` if unset) | Grafana login — set a real password |
 
 ## Caveats
 

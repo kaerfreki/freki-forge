@@ -44,14 +44,14 @@ cp .env.example .env
 docker compose up -d
 ```
 
-`.env.example` ships the Caddy docs lab hash for password **`hiccup`** so you
-can smoke-test immediately — **change it** before any shared-network use.
+`.env.example` ships only a placeholder for `PROXY_PASSWORD_HASH`; the proxy
+will not accept any login until you replace it with a generated hash.
 
 ## curl examples
 
 ```bash
 # Ollama version through the proxy (Basic Auth)
-curl -sS -u 'freki:hiccup' http://localhost:8080/ollama/api/version
+curl -sS -u 'freki:YOUR_PASSWORD' http://localhost:8080/ollama/api/version
 
 # Ollama tags
 curl -sS -u 'freki:YOUR_PASSWORD' http://localhost:8080/ollama/api/tags | jq .
