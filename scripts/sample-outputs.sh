@@ -18,7 +18,7 @@ BENCH_MODELS=${BENCH_MODELS:-"qwen3.5:4b mistral:7b llama3.1:8b ornith:9b qwen3.
 GALLERY_NUM_PREDICT=${GALLERY_NUM_PREDICT:-6144}
 GALLERY_NUM_CTX=${GALLERY_NUM_CTX:-8192}
 
-TASKS=${GALLERY_TASKS:-"summarize extract code reasoning trading legal rag"}
+TASKS=${GALLERY_TASKS:-"summarize extract code reasoning"}
 
 log() { printf '%s %s\n' "$(date +%H:%M:%S)" "$*" >&2; }
 die() { log "ERROR: $*"; exit 1; }
@@ -39,9 +39,6 @@ task_blurb() {
     extract) echo "Extract and deduplicate the ERROR lines of a service log into a JSON array — instruction following and structured output." ;;
     code) echo "Implement a duration-string parser in Python with validation, docstring and examples." ;;
     reasoning) echo "A GPU memory-budget word problem with a single verifiable answer (93 sessions)." ;;
-    trading) echo "Analyse a fixed 10-day price series — verifiable statistics (total return +4.9 %, max drawdown −6.8 %, worst day 7 at −2.7 %, SMA5 103.26 vs SMA10 102.99) plus a structured signal recommendation." ;;
-    legal) echo "Extract the key terms of a contract excerpt into JSON — answer key: 24-month term, 90-day non-renewal notice, convenience exit after month 12 on 60 days' notice, 30-day cure period, liability capped at trailing-12-month fees except confidentiality/IP, French law, net 45." ;;
-    rag) echo "Answer 6 questions strictly from a runbook; questions 3, 5 and 6 are NOT answerable from it (correct reply: \"Not in the document\") and are baited with prior-knowledge and decoy traps." ;;
     esac
 }
 
